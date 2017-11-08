@@ -17,19 +17,37 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+
 /**
  * A login screen that offers login via email/password.
  */
 public class LoginActivity extends BaseActivity{
 
 
-    private EditText user;
-    private EditText password;
+    @BindView(R.id.UserName)
+    EditText user;
+    @BindView(R.id.password)
+    EditText password;
+
     private IntentFilter intentFilter;
 
-    private CheckBox rememberPwd;
+    @BindView(R.id.remember_pwd)
+    CheckBox rememberPwd;
     private boolean isRemember;
-    private View mainView ;
+
+    @BindView(R.id.login_view)
+    View mainView ;
+
+
+    @BindView(R.id.login)
+    Button login;
+    @BindView(R.id.register)
+    Button register;
 
 
 
@@ -63,86 +81,44 @@ public class LoginActivity extends BaseActivity{
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        ButterKnife.bind(this);
 
-        mainView =findViewById(R.id.login_view);
+//        intentFilter = new IntentFilter();
+//        intentFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
+//        networkChangeReceiver = new NetworkChangeReceiver();
+//        registerReceiver(networkChangeReceiver, intentFilter);
 
-        intentFilter = new IntentFilter();
-        intentFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
-        networkChangeReceiver = new NetworkChangeReceiver();
-        registerReceiver(networkChangeReceiver, intentFilter);
-
-        Button login = (Button) findViewById(R.id.login);
-        Button register = (Button) findViewById(R.id.register);
-        user = (EditText) findViewById(R.id.UserName);
-        password = (EditText) findViewById(R.id.password);
-        rememberPwd = (CheckBox) findViewById(R.id.remember_pwd);
 
         judgeIfRememberPwd();
 
+        //using observer to solve login logic
 
+        final Observer<Button> loginObserver = new Observer<Button>() {
+            @Override
+            public void onSubscribe(Disposable d) {}
 
+            @Override
+            public void onNext(Button button) {
+                loginLogic(button);
+            }
 
+            @Override
+            public void onError(Throwable e) {}
 
+            @Override
+            public void onComplete() {}
+        };
+
+        final Observable<Button> loginObservable = Observable.just(login);
 
         login.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                final String userText = user.getText().toString();
-                String pwdText = password.getText().toString();
-                final ProgressDialog pdialog = new ProgressDialog(LoginActivity.this);
-                pdialog.setTitle("Wait for login...");
-                pdialog.setMessage("Loading...");
-                pdialog.setCancelable(true);
-
-
-                if(userText.equals("admin")&&pwdText.equals("123")){
-                    Intent intent = new Intent("xyz.wendyltanpcy.exp3.FORCE_OFFLINE");
-                    sendBroadcast(intent);
-
-                }
-                else if (!userText.isEmpty()&&!pwdText.isEmpty()) {
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    pdialog.show();
-                                }
-                            });
-                            try {
-                                Thread.sleep(5000);
-                                Intent i = new Intent(LoginActivity.this, FriendListActivity.class);
-                                i.putExtra("userName",userText);
-                                startActivity(i);
-                                pdialog.dismiss();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-
-                        }
-                    }).start();
-                    if (rememberPwd.isChecked()){
-                        //remember pwd
-                        inputPwdPreference("repwd","checkboxEditor",true);
-                        //rememeber usr and password
-                        inputInfoPreference("user","infoEditor",userText);
-                        inputInfoPreference("pwd","infoEditor",pwdText);
-                        Snackbar.make(view,"save info success!",Snackbar.LENGTH_SHORT).show();
-                    }else{
-                        //do nothing,using default
-                        inputPwdPreference("repwd","checkboxEditor",false);
-                        inputInfoPreference("user","infoEditor",null);
-                        inputInfoPreference("pwd","infoEditor",null);
-                    }
-
-
-                }
-                else{
-                    Toast.makeText(LoginActivity.this,"fill in all field pls",Toast.LENGTH_SHORT).show();
-                }
+                loginObservable.subscribe(loginObserver);
             }
         });
+
+
 
         register.setOnClickListener(new OnClickListener() {
             @Override
@@ -152,31 +128,72 @@ public class LoginActivity extends BaseActivity{
             }
         });
 
-        /*
-        AlertDialog
-         */
-//
-//        final AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-//        dialog
-//                .setTitle("Welcome to chatroom login!")
-//                .setIcon(R.mipmap.ic_launcher)
-//                .setCancelable(false)
-//                .setPositiveButton("ok", new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialogInterface, int i) {
-//
-//                    }
-//                })
-//                .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialogInterface, int i) {
-//                        finish();
-//                    }
-//                })
-//                .show();
         Snackbar.make(mainView,"WelCome to Me Chat!",Snackbar.LENGTH_SHORT)
                 .show();
     }
+
+    /**
+     * login button logic
+     * @param button
+     */
+
+    public void loginLogic(Button button){
+        final String userText = user.getText().toString();
+        String pwdText = password.getText().toString();
+        final ProgressDialog pdialog = new ProgressDialog(LoginActivity.this);
+        pdialog.setTitle("Wait for login...");
+        pdialog.setMessage("Loading...");
+        pdialog.setCancelable(true);
+
+
+        if(userText.equals("admin")&&pwdText.equals("123")){
+            Intent intent = new Intent("xyz.wendyltanpcy.exp3.FORCE_OFFLINE");
+            sendBroadcast(intent);
+
+        }
+        else if (!userText.isEmpty()&&!pwdText.isEmpty()) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            pdialog.show();
+                        }
+                    });
+                    try {
+                        Thread.sleep(5000);
+                        Intent i = new Intent(LoginActivity.this, FriendListActivity.class);
+                        i.putExtra("userName",userText);
+                        startActivity(i);
+                        pdialog.dismiss();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }).start();
+            if (rememberPwd.isChecked()){
+                //remember pwd
+                inputPwdPreference("repwd","checkboxEditor",true);
+                //rememeber usr and password
+                inputInfoPreference("user","infoEditor",userText);
+                inputInfoPreference("pwd","infoEditor",pwdText);
+                Snackbar.make(button.getRootView(),"save info success!",Snackbar.LENGTH_SHORT).show();
+            }else{
+                //do nothing,using default
+                inputPwdPreference("repwd","checkboxEditor",false);
+                inputInfoPreference("user","infoEditor",null);
+                inputInfoPreference("pwd","infoEditor",null);
+            }
+
+
+        }
+        else{
+            Toast.makeText(LoginActivity.this,"fill in all field pls",Toast.LENGTH_SHORT).show();
+        }
+    }
+
 
     /**
      * judge if isRemember,if is,load data
