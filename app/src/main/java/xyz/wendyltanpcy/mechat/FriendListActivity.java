@@ -1,12 +1,16 @@
 package xyz.wendyltanpcy.mechat;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
 
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +28,7 @@ public class FriendListActivity extends BaseActivity {
     private List<FriendInfo> mFriendInfos = new ArrayList<>();
     private List<Msg> mMsgs= new ArrayList<>();
     private FriendAdapter adapter;
+    private Socket socket;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +44,8 @@ public class FriendListActivity extends BaseActivity {
         friendRecycler.setAdapter(adapter);
 
     }
+
+
 
     public void refreshData(){
 
@@ -87,21 +94,3 @@ public class FriendListActivity extends BaseActivity {
         refreshData();
     }
 }
-
-/**
- * litepal query example
- */
-
-//        List<News> newsList = DataSupport.where("commentcount > ?","0").find(News.class);
-//        List<News> newsList = DataSupport.select("title", "content")
-//        .where("commentcount > ?", "0").find(News.class);  	// 只要title和content两列数据
-//        List<News> newsList = DataSupport.select("title", "content")
-//        .where("commentcount > ?", "0")
-//        .order("publishdate desc").find(News.class);  	// asc正序排序、desc倒序排序
-//        List<News> newsList = DataSupport.select("title", "content")
-//        .where("commentcount > ?", "0")
-//        .order("publishdate desc").limit(10).find(News.class);  // 只查询10条数据
-//        List<News> newsList = DataSupport.select("title", "content")
-//        .where("commentcount > ?", "0")
-//        .order("publishdate desc").limit(10).offset(10)
-//        .find(News.class);

@@ -53,6 +53,8 @@ public class LoginActivity extends BaseActivity{
 
     private NetworkChangeReceiver networkChangeReceiver;
 
+
+
     class NetworkChangeReceiver extends BroadcastReceiver {
 
         @Override
@@ -130,7 +132,10 @@ public class LoginActivity extends BaseActivity{
 
         Snackbar.make(mainView,"WelCome to Me Chat!",Snackbar.LENGTH_SHORT)
                 .show();
+
+
     }
+
 
     /**
      * login button logic
