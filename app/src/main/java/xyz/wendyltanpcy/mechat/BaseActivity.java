@@ -20,6 +20,7 @@ public class BaseActivity extends AppCompatActivity {
 
     private ForceOfflineReceiver mReceiver;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,6 +29,7 @@ public class BaseActivity extends AppCompatActivity {
         if (actionBar!=null){
             actionBar.hide();
         }
+
     }
 
     @Override
