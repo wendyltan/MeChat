@@ -167,7 +167,7 @@ public class LoginActivity extends BaseActivity{
                         }
                     });
                     try {
-                        Thread.sleep(5000);
+                        Thread.sleep(1000);
                         Intent i = new Intent(LoginActivity.this, FriendListActivity.class);
                         i.putExtra("userName",userText);
                         startActivity(i);

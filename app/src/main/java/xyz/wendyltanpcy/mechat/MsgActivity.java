@@ -1,16 +1,24 @@
 package xyz.wendyltanpcy.mechat;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.MediaStore;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
@@ -26,6 +34,11 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import kr.co.namee.permissiongen.PermissionFail;
+import kr.co.namee.permissiongen.PermissionGen;
+import kr.co.namee.permissiongen.PermissionSuccess;
 import xyz.wendyltanpcy.mechat.adapter.MsgAdapter;
 import xyz.wendyltanpcy.mechat.model.FriendInfo;
 import xyz.wendyltanpcy.mechat.model.Msg;
@@ -35,20 +48,35 @@ import xyz.wendyltanpcy.mechat.model.Msg;
  */
 
 public class MsgActivity extends BaseActivity {
+
+
     private List<Msg> msgList = new ArrayList<>();
 
-    private EditText inputText;
+    //view
+    @BindView(R.id.input_text)
+    EditText inputText;
+    @BindView(R.id.send)
+    Button send;
+    @BindView(R.id.msg_recycler_view)
+    RecyclerView msgRecyclerView;
+    @BindView(R.id.send_pic)
+    Button sendPic;
 
-    private Button send;
+    @BindView(R.id.mychat_image)
+    ImageView addButton;
+    @BindView(R.id.title_text)
+    TextView titleText;
+
+    //image
+    public static final int REQUEST_ALBUM = 2;
 
     private boolean nowType = false;
-
-    private RecyclerView msgRecyclerView;
 
     private MsgAdapter adapter;
 
     private FriendInfo mFriendInfo;
 
+    //network
     private Socket socketClient;
     private String serverString = "";
     private ServerSocket serverSocket;
@@ -134,18 +162,31 @@ public class MsgActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_message);
+        ButterKnife.bind(this);
+
+
+
         Intent i  = getIntent();
         mFriendInfo = (FriendInfo) i.getSerializableExtra("info");
+        //setting name,hidding add button
+        addButton.setVisibility(View.GONE);
+        titleText.setText(mFriendInfo.getFriendName());
+
+        //request permission
+        PermissionGen.with(MsgActivity.this)
+                .addRequestCode(100)
+                .permissions(
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.INTERNET,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .request();
 
         initMsgs(); // 初始化消息数据
 
         initServer();
         initClient();
 
-        inputText = (EditText) findViewById(R.id.input_text);
-        send = (Button) findViewById(R.id.send);
-        msgRecyclerView = (RecyclerView) findViewById(R.id.msg_recycler_view);
-
+        //set recyclerview
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         msgRecyclerView.setLayoutManager(layoutManager);
         adapter = new MsgAdapter(msgList);
@@ -179,7 +220,80 @@ public class MsgActivity extends BaseActivity {
                 }
             }
         });
+
+        sendPic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onClickPicker(view);
+
+            }
+        });
+
+
     }
+
+
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                                     int[] grantResults) {
+        PermissionGen.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
+    }
+
+    @PermissionSuccess(requestCode = 100)
+    public void doSomething(){
+        //do nothing
+//        Toast.makeText(this, "permission is granted", Toast.LENGTH_SHORT).show();
+    }
+
+    @PermissionFail(requestCode = 100)
+    public void doFailSomething(){
+        Toast.makeText(this, "permission is not granted", Toast.LENGTH_SHORT).show();
+    }
+    public void onClickPicker(View v) {
+        new AlertDialog.Builder(this)
+                .setTitle("选择照片")
+                .setItems(new String[]{"相册"}, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        if (i == 0) {
+                            selectAlbum();
+                        }
+                    }
+                })
+                .create()
+                .show();
+    }
+
+    private void selectAlbum() {
+        Intent albumIntent = new Intent(Intent.ACTION_PICK);
+        albumIntent.setData(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(albumIntent, REQUEST_ALBUM);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (RESULT_OK != resultCode) {
+            return;
+        }
+        switch (requestCode) {
+            case REQUEST_ALBUM:
+
+                Uri uri = data.getData();
+                if (uri != null) {
+                    Msg msgSend = new Msg(true, chooseType(nowType));
+                    msgSend.setFriendName(mFriendInfo.getFriendName());
+                    msgSend.setHasPic(true);
+                    msgSend.setPicUri(String.valueOf(uri));
+                    msgSend.save();
+                    msgList.add(msgSend);
+                    nowType = !nowType;
+                    adapter.notifyItemInserted(msgList.size() - 1); // 当有新消息时，刷新ListView中的显示
+                    msgRecyclerView.scrollToPosition(msgList.size() - 1); // 将ListView定位到最后一行
+                }
+                break;
+        }
+    }
+
 
     @Override
     public void onBackPressed() {

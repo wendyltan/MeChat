@@ -25,6 +25,12 @@
             android:maxLines="2" />
 
         <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/send_pic"
+            android:text="Send Pic"/>
+
+        <Button
             android:id="@+id/send"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

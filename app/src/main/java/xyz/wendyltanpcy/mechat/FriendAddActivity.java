@@ -9,6 +9,7 @@ import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import org.litepal.crud.DataSupport;
+import org.litepal.tablemanager.Connector;
 
 import java.util.List;
 
@@ -20,8 +21,6 @@ public class FriendAddActivity extends BaseActivity {
 
     @BindView(R.id.enterName)
     EditText enterName;
-    @BindView(R.id.enterID)
-    EditText enterID;
 
     @BindView(R.id.radio_group)
     RadioGroup mRadioGroup;
@@ -44,6 +43,7 @@ public class FriendAddActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_friend_add);
         ButterKnife.bind(this);
+        Connector.getDatabase();
 
         mRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -58,25 +58,22 @@ public class FriendAddActivity extends BaseActivity {
                 FriendInfo info = new FriendInfo();
                 List<FriendInfo> friendInfos = DataSupport.findAll(FriendInfo.class);
 
-                if (!enterName.getText().toString().isEmpty()&&!enterID.getText().toString().isEmpty()){
+                if (!enterName.getText().toString().isEmpty()){
                     String name = enterName.getText().toString();
-                    int id = Integer.parseInt(enterID.getText().toString());
-                    for (FriendInfo inf:friendInfos){
-                        if (inf.getId()==id){
-                            Toast.makeText(getApplicationContext(),"id已经存在！",Toast.LENGTH_SHORT).show();
-                            enterID.getText().clear();
-                            break;
+                    if (!friendInfos.isEmpty()){
+                        for (FriendInfo inf:friendInfos){
+                            if(inf.getFriendName().equals(name)){
+                                Toast.makeText(getApplicationContext(),"name已经存在！",Toast.LENGTH_SHORT).show();
+                                enterName.getText().clear();
+                                break;
+                            }
+                            else
+                                info.setFriendName(name);
                         }
-                        else
-                            info.setId(id);
-                        if(inf.getFriendName().equals(name)){
-                            Toast.makeText(getApplicationContext(),"name已经存在！",Toast.LENGTH_SHORT).show();
-                            enterName.getText().clear();
-                            break;
-                        }
-                        else
-                            info.setFriendName(name);
+
                     }
+                    else
+                        info.setFriendName(name);
 
 
                     if (checkID==mRadioButton1.getId())
@@ -87,10 +84,14 @@ public class FriendAddActivity extends BaseActivity {
                         info.setFriendCategory(3);
                     else if (checkID==mRadioButton4.getId())
                         info.setFriendCategory(4);
-                    if (!enterName.getText().toString().isEmpty()&&!enterID.getText().toString().isEmpty()) {
+                    else
+                        //default
+                        info.setFriendCategory(1);
+
+                    if (!enterName.getText().toString().isEmpty()) {
                         info.save();
                         Toast.makeText(getApplicationContext(), "朋友创建成功！", Toast.LENGTH_SHORT).show();
-                        finish();
+                        onBackPressed();
                     }
                 }
                 else

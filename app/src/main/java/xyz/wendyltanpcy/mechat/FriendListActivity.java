@@ -1,9 +1,10 @@
 package xyz.wendyltanpcy.mechat;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.diegocarloslima.fgelv.lib.WrapperExpandableListAdapter;
 
@@ -26,6 +27,9 @@ public class FriendListActivity extends BaseActivity {
     @BindView(R.id.my_list)
     ExpandableListView myList;
 
+    @BindView(R.id.title_text)
+    TextView titleText;
+
     private List<FriendInfo> mFriendInfos = new ArrayList<>();
     private List<Msg> mMsgs= new ArrayList<>();
     private Socket socket;
@@ -37,74 +41,53 @@ public class FriendListActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_intent);
         ButterKnife.bind(this);
-        Connector.getWritableDatabase();
+        Connector.getDatabase();
+        //setting name,hidding add button
+        titleText.setText("FriendList");
+
         mFriendInfos = DataSupport.findAll(FriendInfo.class);
         refreshData();
-        for (FriendInfo info:mFriendInfos)
-        {
-            Log.i("TAG",info.getFriendName());
-            Log.i("TAG", String.valueOf(info.getFriendCategory()));
-        }
-
         adapter = new FriendNewAdapter(mFriendInfos);
         wrapper = new WrapperExpandableListAdapter(adapter);
         myList.setAdapter(wrapper);
+        for (int i=0;i<3;i++){
+            myList.expandGroup(i);
+        }
 
     }
 
 
 
     private void refreshData() {
-        if (mFriendInfos.isEmpty()) {
-
-            FriendInfo info = new FriendInfo();
-            info.setFriendName("wendy");
-            info.setFriendCategory(1);//category 1
-            info.setId(1);
-            info.save();
-            mFriendInfos.add(info);
-            FriendInfo info1 = new FriendInfo();
-            info1.setFriendName("jaci");
-            info1.setFriendCategory(2);//category 2
-            info1.setId(2);
-            info1.save();
-            mFriendInfos.add(info1);
-            FriendInfo info2 = new FriendInfo();
-            info2.setFriendName("monica");
-            info2.setFriendCategory(3);//category 3
-            info2.setId(3);
-            info2.save();
-            mFriendInfos.add(info2);
-            FriendInfo info3 = new FriendInfo();
-            info3.setFriendName("sayori");
-            info3.setFriendCategory(4);//category 4
-            info3.setId(4);
-            info3.save();
-            mFriendInfos.add(info3);
-        }else {
-            //获取各好友相关的信息列表
+        //获取各好友相关的信息列表
+        if (!mFriendInfos.isEmpty()) {
             for (FriendInfo info : mFriendInfos) {
                 mMsgs = DataSupport.where("friendName = ?", info.getFriendName()).find(Msg.class);
                 info.setFriendMsgList(mMsgs);
                 //get last message
                 if (!mMsgs.isEmpty()) {
                     Msg msg = mMsgs.get(mMsgs.size() - 1);
-                    info.setFriendLatestTalk(msg.getContent());
+                    if (msg.isHasPic())
+                        info.setFriendLatestTalk("[pic]");
+                    else
+                        info.setFriendLatestTalk(msg.getContent());
                 } else {
-                    info.setFriendLatestTalk("no lastest talk currently");
+                    info.setFriendLatestTalk("[no lastest talk currently]");
                 }
 
                 mMsgs.clear();
             }
 
         }
+        else
+            Toast.makeText(getApplicationContext(),"还没有好友呢！",Toast.LENGTH_SHORT).show();
 
     }
+
 
     @Override
     protected void onResume() {
         super.onResume();
-        refreshData();
-        wrapper.notifyDataSetChanged();
     }
+
 }

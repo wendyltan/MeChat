@@ -19,21 +19,11 @@ public class FriendInfo extends DataSupport implements Serializable{
     private List<Msg> friendMsgList;
     private int friendCategory;
 
-    @Column (unique = true)
-    private int id;
-
 
     public void setFriendLatestTalk(String friendLatestTalk) {
         this.friendLatestTalk = friendLatestTalk;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public int getId() {
-        return id;
-    }
 
     public void setFriendName(String friendName) {
         this.friendName = friendName;

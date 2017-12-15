@@ -137,7 +137,7 @@ public class FriendNewAdapter implements ExpandableListAdapter {
         return convertView;
     }
 
-    //        获取显示指定分组中的指定子选项的视图
+    //       获取显示指定分组中的指定子选项的视图
     @Override
     public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, final ViewGroup parent) {
         ChildViewHolder childViewHolder;
